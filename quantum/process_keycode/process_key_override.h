@@ -129,21 +129,27 @@ void key_override_task(void);
 #define ko_make_with_layers_and_negmods(trigger_mods, trigger_key, replacement_key, layers, negative_mask) \
     ko_make_with_layers_negmods_and_options(trigger_mods, trigger_key, replacement_key, layers, negative_mask, ko_options_default)
 
+// Get the mods from the keycode and create a mask with BOTH the left and right modifiers
+#define KO_MODS_GET_MASK(kc) ((((kc) >> 8) & 0xF) | (((kc) >> 4) & 0xF0))
+
+// Remove the bits from the mod_mask that match the modifiers on the keycode
+#define KO_SUPPRESS(mod_mask, kc) (IS_QK_MODS((uint16_t)(kc))?(mod_mask - (mod_mask & KO_MODS_GET_MASK(kc))):mod_mask)
+
  /**
   *  Convenience initializer to create a basic key override. Provide a bitmap with the bits set for each layer on which the override should activate. Also provide a negative modifier mask, that is used to define which modifiers may not be pressed. Provide options for additional control of the behavior of the override.
  */
 #define ko_make_with_layers_negmods_and_options(trigger_mods_, trigger_key, replacement_key, layer_mask, negative_mask, options_) \
-    ((const key_override_t){                                                                \
-        .trigger_mods                           = (trigger_mods_),                          \
-        .layers                                 = (layer_mask),                             \
-        .suppressed_mods                        = (trigger_mods_),                          \
-        .options                                = (options_),                               \
-        .negative_mod_mask                      = (negative_mask),                          \
-        .custom_action                          = NULL,                                     \
-        .context                                = NULL,                                     \
-        .trigger                                = (trigger_key),                            \
-        .replacement                            = (replacement_key),                        \
-        .enabled                                = NULL                                      \
+    ((const key_override_t){                                                                       \
+        .trigger_mods                           = (trigger_mods_),                                 \
+        .layers                                 = (layer_mask),                                    \
+        .suppressed_mods                        = KO_SUPPRESS((trigger_mods_), (replacement_key)), \
+        .options                                = (options_),                                      \
+        .negative_mod_mask                      = (negative_mask),                                 \
+        .custom_action                          = NULL,                                            \
+        .context                                = NULL,                                            \
+        .trigger                                = (trigger_key),                                   \
+        .replacement                            = (replacement_key),                               \
+        .enabled                                = NULL                                             \
     })
 
 // clang-format on
